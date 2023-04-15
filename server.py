@@ -4,7 +4,7 @@ import socket
 from socket import *
 import hashlib
 import random
-import secrets
+from cryptography.fernet import Fernet
 
 serverPort = 12000
 k_a = "a3c52bc7fd3a125e" 
@@ -23,10 +23,17 @@ while True:
 
     rand = random.randint(1,10)
     h = hashlib.new('sha256')
+    h2 = hashlib.new('md5')
+
+    #hash1(rand + k_a)
     hashString = str(rand)+k_a
     hashFunc = hashString.encode()
     h.update(hashFunc)
     xres = h.hexdigest()
+
+    h2.update(hashFunc)
+    ck_a = h2.hexdigest()
+
     serverSocket.sendto(str(rand).encode(), clientAddress)
 
     chalAns, clientAddress = serverSocket.recvfrom(2048)
@@ -37,5 +44,11 @@ while True:
 
     if res == xres: 
         print("SUCCESS")
-        genKey = token_hex(16)
-        
+        randCookie = random.randint(1,10)
+        authSuccess = str(randCookie)+serverPort
+        print(authSuccess)
+
+        #encrypt and send auth message
+        cipher_suite = Fernet(ck_a)
+        authEnc = cipher_suite.encrypt(authSuccess.encode())
+        serverSocket.sendto(authEnc, clientAddress)  
