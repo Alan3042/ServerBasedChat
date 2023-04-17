@@ -1,3 +1,4 @@
+#clientA.py
 #! /usr/bin/env python3
 import socket
 from socket import *
@@ -13,8 +14,6 @@ clientSocket = socket(AF_INET, SOCK_DGRAM)
 clientSocket.sendto(clientID.encode(), (serverIP, serverPort))
 
 randrecv, serverAddress = clientSocket.recvfrom(2048)
-
-
 randcheck = randrecv.decode()
 print(randcheck)
 
@@ -26,9 +25,9 @@ h.update(hashFunc)
 h2.update(hashFunc)
 ck_a = h2.hexdigest()
 
-clientSocket.sendto(h.hexdigest().encode(), (serverIP, serverPort))
+clientSocket.sendto(h.hexdigest().encode(), serverAddress)
 
 authMsg, serverAddress = clientSocket.recvfrom(2048)
-cipher_suite = Fernet(ck_a)
-authDec = cipher_suite.decrypt(authMsg.decode())
-print(authDec)
+cipher_suite = Fernet(ck_a.encode())
+authDec = cipher_suite.decrypt(authMsg)
+print(authDec.decode())
