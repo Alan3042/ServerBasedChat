@@ -7,6 +7,10 @@ import hashlib
 import random
 from cryptography.fernet import Fernet
 
+from nltk.tokenize import word_tokenize
+with open ('myfile.txt') as fin:
+    tokens = word_tokenize(fin.read())
+
 serverPort = 12000
 k_a = "a3c52bc7fd3a125e"
 k_b = "b0c2499ad74cf2a4"
