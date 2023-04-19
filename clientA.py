@@ -1,8 +1,8 @@
-#clientA.py
-#! /usr/bin/env python3
+#! /usr/bin/env python3.8
 import socket
 from socket import *
 import hashlib
+import base64
 from cryptography.fernet import Fernet
 
 serverName = 'hostname'
@@ -28,6 +28,6 @@ ck_a = h2.hexdigest()
 clientSocket.sendto(h.hexdigest().encode(), serverAddress)
 
 authMsg, serverAddress = clientSocket.recvfrom(2048)
-cipher_suite = Fernet(ck_a.encode())
+cipher_suite = Fernet(base64.urlsafe_b64encode(bytes(ck_a, 'utf-8')))
 authDec = cipher_suite.decrypt(authMsg)
 print(authDec.decode())
