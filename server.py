@@ -11,16 +11,17 @@ from cryptography.fernet import Fernet
 #with open ('myfile.txt') as fin:
 #    tokens = word_tokenize(fin.read())
 
+serverAddress = "127.0.0.1"
 serverPort = 12000
 k_a = "a3c52bc7fd3a125e"
 k_b = "b0c2499ad74cf2a4"
 serverSocket = socket(AF_INET, SOCK_DGRAM)
-serverSocket.bind(('', serverPort))
+serverSocket.bind((serverAddress, serverPort))
 print ("The server is ready to receive")
 while True:
     clientID, clientAddress = serverSocket.recvfrom(2048)
     checkID = clientID.decode()
-    print(checkID)
+    #print(checkID)
     #if checkID != k_a:
        # message = "Key does not match"
        # serverSocket.sendto(message.encode(), clientAddress)
@@ -36,26 +37,38 @@ while True:
 
     h2.update(hashFunc)
     ck_a = h2.hexdigest()
-    print("ck_a: " + ck_a)
+    #print("ck_a: " + ck_a)
 
     serverSocket.sendto(str(rand).encode(), clientAddress)
 
     chalAns, clientAddress = serverSocket.recvfrom(2048)
     res = chalAns.decode()
 
-    print(res)
-    print(xres)
+    #print(res)
+    #print(xres)
 
-    if res == xres: 
-        print("SUCCESS")
-        randCookie = random.randint(1,10)
-        authSuccess = str(randCookie) + ',' + str(serverPort)
-        print(authSuccess)
+    if res != xres: 
+        msgFail = "Client not found. Aborting"
+        serverSocket.sendto(msgFail.encode(), clientAddress)
+        break
 
-        #encrypt and send auth message
-        b = base64.urlsafe_b64encode(bytes(ck_a, 'utf-8'))
-        print(b)
-        cipher_suite = Fernet(b)
-        print("Encrypting")
-        authEnc = cipher_suite.encrypt(authSuccess.encode())
-        serverSocket.sendto(authEnc, clientAddress)
+    #print("SUCCESS")
+    randCookie = random.randint(1,10)
+    authSuccess = str(randCookie) + ',' + str(serverPort)
+    #print(authSuccess)
+
+    #encrypt and send auth message
+    b = base64.urlsafe_b64encode(bytes(ck_a, 'utf-8'))
+    #print(b)
+    cipher_suite = Fernet(b)
+    print("Encrypting")
+    authEnc = cipher_suite.encrypt(authSuccess.encode())
+    serverSocket.sendto(authEnc, clientAddress)
+
+    serverTCP = socket(AF_INET, SOCK_STREAM)
+    serverTCP.bind((serverAddress, serverPort))
+    serverTCP.listen()
+    connect, clientAddress = serverTCP.accept()
+    with connect:
+        print(f"Connected by {clientAddress}")
+ 
