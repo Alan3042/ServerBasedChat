@@ -9,8 +9,8 @@ import sys
 serverName = 'hostname'
 serverIP = "127.0.0.1"
 serverPort = 12000
-clientID = 'client1'
-key = 'a3c52bc7fd3a125f'
+clientID = 'clientA'
+key = 'a3c52bc7fd3a125e'
 clientSocket = socket(AF_INET, SOCK_DGRAM)
 clientSocket.sendto(clientID.encode(), (serverIP, serverPort))
 
@@ -28,7 +28,7 @@ ck_a = h2.hexdigest()
 
 clientSocket.sendto(h.hexdigest().encode(), serverAddress)
 
-authMsg, serverAddress = clientSocket.recvfrom(2048)
+authMsg, serverAddress = clientSocket.recvfrom(1024)
 if authMsg.decode() == 'Client not found. Aborting':
     print(authMsg.decode())
     clientSocket.close()
@@ -36,13 +36,30 @@ if authMsg.decode() == 'Client not found. Aborting':
 
 cipher_suite = Fernet(base64.urlsafe_b64encode(bytes(ck_a, 'utf-8')))
 authDec = cipher_suite.decrypt(authMsg).decode()
-print(authDec)
+#print(authDec)
 
-splitByComma = authDec.split(',');
+splitByComma = authDec.split(',')
 randCookie = splitByComma[0]
-print(randCookie)
+serverTcp = splitByComma[1]
+#print(randCookie)
+#print(serverTcp)
 
-clientTCP = socket(AF_INET, SOCK_STREAM)
-clientTCP.connect((serverIP, serverPort))
-clientTCP.sendall(randCookie.encode())
-connected = clientTCP.recv(1024)
+clientSocket.close()
+
+#initiating tcp connection
+clientSocket = socket(AF_INET, SOCK_STREAM)
+clientSocket.connect((serverIP, serverPort))
+clientSocket.send(randCookie.encode())
+connected = clientSocket.recv(1024)
+
+print(connected.decode())
+
+chat = input(">")
+clientSocket.send(chat.encode())
+
+if chat == "Log off":
+    #logoffMsg = clientSocket.recv(1024)
+    #print(logoffMsg)
+    print("Disconnecting")
+    clientSocket.close()
+    sys.exit()
