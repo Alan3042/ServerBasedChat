@@ -6,15 +6,12 @@ import hashlib
 import random
 import base64
 from cryptography.fernet import Fernet
-
-#from nltk.tokenize import word_tokenize
-#with open ('myfile.txt') as fin:
-#    tokens = word_tokenize(fin.read())
+import threading
 
 udpAddress = "127.0.0.1"
 tcpAddress = "127.0.0.1"
 udpPort = 12000
-tcpPort = 12000 
+tcpPort = 5001 
 
 name, keys = 4, 2
 keyArr = [[0 for i in range(keys)] for j in range(name)]
@@ -23,13 +20,58 @@ keyArr[0][1] = "a3c52bc7fd3a125e"
 keyArr[1][0] = "clientB"
 keyArr[1][1] = "b0c2499ad74cf2a4"
 
+
 def column(keyArr, c):
     return [row[c] for row in keyArr]
 #for name in keyArr:
 #    print(name)
 
+def broadcast(msg):
+    users = column(keyArr, 0)    
+    print(users)
+    for user in users:
+        user.send(msg)
+def threadTCP(c):
+    while True:
+        try:
+            data = c.recv(1024)
+            broadcast(data)
+            #if not data:
+                #print_lock.release()
+            #    break
+            #data = data[::-1]
+            #c.send(data)
+            #print("recieved data:", data)
+        except:
+            users = column(keyArr, 0)
+            users.remove(c)
+            c.close()
+            break
+
+def tcpConn():
+    while True:
+        connect, clientAddress = serverTCP.accept()
+        print(f"Connected by {clientAddress}")
+        
+        connect.send(f"You are now connected to {tcpAddress}".encode())
+
+        thread = threading.Thread(target=threadTCP, args=(connect,))
+        thread.start()
+
+        #clientResponse = connect.recv(1024)
+
+        #if clientResponse.decode() == "Log off":
+        #    print(f"{clientAddress} disconnected")
+
+
+        
 serverSocket = socket(AF_INET, SOCK_DGRAM)
 serverSocket.bind((udpAddress, udpPort))
+
+serverTCP = socket(AF_INET, SOCK_STREAM)
+serverTCP.bind((tcpAddress, tcpPort))
+serverTCP.listen(4)
+
 print ("The server is ready to receive")
 while True:
     clientID, clientAddress = serverSocket.recvfrom(1024)
@@ -78,7 +120,7 @@ while True:
         serverSocket.sendto(msgFail.encode(), clientAddress)
         break
 
-    #print("SUCCESS")
+    print("Client authenticated")
     randCookie = random.randint(1,10)
     authSuccess = str(randCookie) + ',' + str(tcpPort)
     #print(authSuccess)
@@ -90,24 +132,8 @@ while True:
     print("Encrypting")
     authEnc = cipher_suite.encrypt(authSuccess.encode())
     serverSocket.sendto(authEnc, clientAddress)
-    serverSocket.close()
 
-    serverSocket = socket(AF_INET, SOCK_STREAM)
-    serverSocket.bind((tcpAddress, tcpPort))
-    serverSocket.listen(1)
-    connect, clientAddress = serverSocket.accept()
-    print(f"Connected by {clientAddress}")
-    while 1:
-        data = connect.recv(1024)
-        if not data: break
-        print("recieved data:", data)
-        
-        connect.send(f"You are now connected to {tcpAddress}".encode())
+    tcpConn()     
 
-        clientResponse = connect.recv(1024)
-
-        if clientResponse.decode() == "Log off":
-            print(f"{clientAddress} disconnected")
-
-        #serverSocket.close()
+serverSocket.close()
  

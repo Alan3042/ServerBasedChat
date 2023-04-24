@@ -5,13 +5,32 @@ import hashlib
 import base64
 from cryptography.fernet import Fernet
 import sys
+import threading
 
 serverName = 'hostname'
 serverIP = "127.0.0.1"
 serverPort = 12000
-clientID = 'clientA'
-key = 'a3c52bc7fd3a125e'
+clientID = 'clientB'
+key = 'b0c2499ad74cf2a4'
 clientSocket = socket(AF_INET, SOCK_DGRAM)
+
+def receive(): 
+    while True:
+        msg = clientSocket.recv(1024).decode()
+        print(msg)
+
+def write():
+    while True:
+        chat = input(">")
+        clientSocket.send(chat.encode())
+
+        if chat == "Log off":
+            #logoffMsg = clientSocket.recv(1024)
+            #print(logoffMsg)
+            print("Disconnecting")
+            clientSocket.close()
+            sys.exit()
+
 clientSocket.sendto(clientID.encode(), (serverIP, serverPort))
 
 randrecv, serverAddress = clientSocket.recvfrom(2048)
@@ -42,23 +61,21 @@ splitByComma = authDec.split(',')
 randCookie = splitByComma[0]
 serverTcp = splitByComma[1]
 #print(randCookie)
-#print(serverTcp)
+print(serverTcp)
 
 clientSocket.close()
 
 #initiating tcp connection
 clientSocket = socket(AF_INET, SOCK_STREAM)
-clientSocket.connect((serverIP, serverPort))
+clientSocket.connect((serverIP, int(serverTcp)))
 clientSocket.send(randCookie.encode())
 connected = clientSocket.recv(1024)
 
 print(connected.decode())
 
-chat = input(">")
-clientSocket.send(chat.encode())
+receive_thread = threading.Thread(target=receive)
+receive_thread.start()
 
-if chat == "Log off":
-    logoffMsg = clientSocket.recv(1024)
-    print(logoffMsg)
-    clientSocket.close()
-    sys.exit()
+write_thread = threading.Thread(target=write)
+write_thread.start()
+
