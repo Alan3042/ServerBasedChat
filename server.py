@@ -19,7 +19,12 @@ keyArr[0][0] = "clientA"
 keyArr[0][1] = "a3c52bc7fd3a125e"
 keyArr[1][0] = "clientB"
 keyArr[1][1] = "b0c2499ad74cf2a4"
+keyArr[2][0] = "clientC"
+keyArr[2][1] = "c341ad84cbf67fea" 
+keyArr[3][0] = "clientD"
+keyArr[3][1] = "d875acd920bfe21c"
 
+threads = []
 
 def column(keyArr, c):
     return [row[c] for row in keyArr]
@@ -27,25 +32,19 @@ def column(keyArr, c):
 #    print(name)
 
 def broadcast(msg):
-    users = column(keyArr, 0)    
-    print(users)
-    for user in users:
+    for user in threads:
         user.send(msg)
 def threadTCP(c):
+    print(threads)
     while True:
         try:
             data = c.recv(1024)
+
             broadcast(data)
-            #if not data:
-                #print_lock.release()
-            #    break
-            #data = data[::-1]
-            #c.send(data)
-            #print("recieved data:", data)
         except:
-            users = column(keyArr, 0)
-            users.remove(c)
+            threads.remove(c)
             c.close()
+            print(f"{clientAddress} disconnected")
             break
 
 def tcpConn():
@@ -133,7 +132,16 @@ while True:
     authEnc = cipher_suite.encrypt(authSuccess.encode())
     serverSocket.sendto(authEnc, clientAddress)
 
-    tcpConn()     
+    connect, clientAddress = serverTCP.accept()
+    print(f"Connected by {clientAddress}")
+
+    connect.send(f"You are now connected to {tcpAddress}".encode())
+
+    threads.append(connect)
+
+    thread = threading.Thread(target=threadTCP, args=(connect,))
+    thread.start()
+    #tcpConn()     
 
 serverSocket.close()
  

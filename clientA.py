@@ -6,6 +6,8 @@ import base64
 from cryptography.fernet import Fernet
 import sys
 import threading
+import os
+import signal 
 
 serverName = 'hostname'
 serverIP = "127.0.0.1"
@@ -16,21 +18,27 @@ clientSocket = socket(AF_INET, SOCK_DGRAM)
 
 def receive(): 
     while True:
-        msg = clientSocket.recv(1024).decode()
-        print(msg)
+        try:
+            msg = clientSocket.recv(1024).decode()
+            print(msg)
+        except:
+            clientSocket.close()
+            sys.exit()
+            break
 
 def write():
     while True:
-        chat = input(">")
-        clientSocket.send(chat.encode())
-
+        chat = input('')
+        msgChat = '{}: {}'.format(clientID, chat)
+        clientSocket.send(msgChat.encode())
         if chat == "Log off":
             #logoffMsg = clientSocket.recv(1024)
             #print(logoffMsg)
             print("Disconnecting")
             clientSocket.close()
             sys.exit()
-
+            break
+  
 clientSocket.sendto(clientID.encode(), (serverIP, serverPort))
 
 randrecv, serverAddress = clientSocket.recvfrom(2048)
@@ -72,6 +80,20 @@ clientSocket.send(randCookie.encode())
 connected = clientSocket.recv(1024)
 
 print(connected.decode())
+#while True:
+#    chat = input(">")
+#    clientSocket.send(chat.encode())
+
+#    if chat == "Log off":
+        #logoffMsg = clientSocket.recv(1024)
+        #print(logoffMsg)
+#        print("Disconnecting")
+#        clientSocket.close()
+#        sys.exit()
+
+#        msg = clientSocket.recv(1024).decode()
+#        print(msg)
+
 
 receive_thread = threading.Thread(target=receive)
 receive_thread.start()

@@ -12,8 +12,8 @@ import signal
 serverName = 'hostname'
 serverIP = "127.0.0.1"
 serverPort = 12000
-clientID = 'clientB'
-key = 'b0c2499ad74cf2a4'
+clientID = 'clientC'
+key = 'c341ad84cbf67fea'
 clientSocket = socket(AF_INET, SOCK_DGRAM)
 
 def receive(): 
