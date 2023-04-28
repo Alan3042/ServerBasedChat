@@ -24,7 +24,9 @@ keyArr[2][1] = "c341ad84cbf67fea"
 keyArr[3][0] = "clientD"
 keyArr[3][1] = "d875acd920bfe21c"
 
+connUser = []
 threads = []
+chatThreads = []
 
 def column(keyArr, c):
     return [row[c] for row in keyArr]
@@ -32,20 +34,47 @@ def column(keyArr, c):
 #    print(name)
 
 def broadcast(msg):
-    for user in threads:
+    for user in chatThreads:
+        #print(user)
         user.send(msg)
-def threadTCP(c):
-    print(threads)
+def userChat(c1):
     while True:
-        try:
-            data = c.recv(1024)
-
-            broadcast(data)
-        except:
+        msg = c1.recv(1024)
+        print(msg.decode())
+        if msg == "End chat":
+            for user in chatThreads:
+                chatThreads.remove(user)
+            print("Chat ended")
+        broadcast(msg)
+def threadTCP(c):
+    #print(threads)
+    while True:
+        data = c.recv(1024)
+        if data.decode() == "Log off":
             threads.remove(c)
             c.close()
             print(f"{clientAddress} disconnected")
             break
+        for name in connUser:
+            if name == data.decode():
+                userIndex = connUser.index(data.decode())
+                #print(userIndex)
+                toChat = threads[userIndex]
+                #print("clientA: " + str(c))
+                #print("clientB: " + str(toChat))
+                chatThreads.append(c)
+                chatThreads.append(toChat)
+                #print(chatThreads)
+
+                for user in chatThreads:
+                    chatThread = threading.Thread(target=userChat, args=(user, ))
+                    chatThread.start()
+
+                c.send("Connected to user".encode())
+                toChat.send("Connected to user".encode())
+                print("Users connected")
+        #broadcast(data)
+        #c.send(data)
 
 def tcpConn():
     while True:
@@ -123,6 +152,8 @@ while True:
     randCookie = random.randint(1,10)
     authSuccess = str(randCookie) + ',' + str(tcpPort)
     #print(authSuccess)
+    connUser.append(clientID.decode())
+    print(connUser)
 
     #encrypt and send auth message
     b = base64.urlsafe_b64encode(bytes(ck_a, 'utf-8'))

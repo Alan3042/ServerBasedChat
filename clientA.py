@@ -6,8 +6,6 @@ import base64
 from cryptography.fernet import Fernet
 import sys
 import threading
-import os
-import signal 
 
 serverName = 'hostname'
 serverIP = "127.0.0.1"
@@ -32,13 +30,16 @@ def write():
         msgChat = '{}: {}'.format(clientID, chat)
         clientSocket.send(msgChat.encode())
         if chat == "Log off":
-            #logoffMsg = clientSocket.recv(1024)
-            #print(logoffMsg)
+            clientSocket.send(chat.encode())
             print("Disconnecting")
             clientSocket.close()
             sys.exit()
             break
-  
+
+        if chat[:4] == "Chat":
+            clientSocket.send(chat[-7:].encode())
+            print("Connecting to client")
+
 clientSocket.sendto(clientID.encode(), (serverIP, serverPort))
 
 randrecv, serverAddress = clientSocket.recvfrom(2048)
@@ -47,7 +48,7 @@ randcheck = randrecv.decode()
 
 hashSolve = str(randcheck)+key
 h = hashlib.new('sha256')
-h2 = hashlib.new('md5')
+h2 = hashlib.new('md5') #Needed for 32-byte key encryption
 hashFunc = hashSolve.encode()
 h.update(hashFunc)
 h2.update(hashFunc)
@@ -81,18 +82,23 @@ connected = clientSocket.recv(1024)
 
 print(connected.decode())
 #while True:
-#    chat = input(">")
-#    clientSocket.send(chat.encode())
+    #msg = clientSocket.recv(1024).decode()
+    #print(msg)
 
-#    if chat == "Log off":
-        #logoffMsg = clientSocket.recv(1024)
-        #print(logoffMsg)
-#        print("Disconnecting")
-#        clientSocket.close()
-#        sys.exit()
+    #chat = input('')
+    #beforeChat = '{}: {}'.format(clientID, chat)
+    #print(chat[:4])
+    #if chat == "Log off":
+    #    clientSocket.send(chat.encode())
+    #    print("Disconnecting")
+    #    clientSocket.close()
+    #    sys.exit()
+    #    break
 
-#        msg = clientSocket.recv(1024).decode()
-#        print(msg)
+    #if chat[:4] == "Chat":
+    #    clientSocket.send(chat[-7:].encode())
+    #    print("Connecting to client")
+        #clientSocket.send(chat.encode())
 
 
 receive_thread = threading.Thread(target=receive)
