@@ -26,26 +26,44 @@ keyArr[3][1] = "d875acd920bfe21c"
 
 connUser = []
 threads = []
-chatThreads = []
+chatRoom1 = []
+chatRoom2 = []
 
-def column(keyArr, c):
-    return [row[c] for row in keyArr]
+def column(arr, c):
+    return [row[c] for row in arr]
 #for name in keyArr:
 #    print(name)
+def userChatCol(chatThreads, c):
+    return [row[c] for row in chatThreads]
 
-def broadcast(msg):
-    for user in chatThreads:
-        #print(user)
-        user.send(msg)
-def userChat(c1):
+def userChat1(c1):
     while True:
         msg = c1.recv(1024)
         print(msg.decode())
-        if msg == "End chat":
-            for user in chatThreads:
-                chatThreads.remove(user)
+        cmdSplit = msg.decode().split(': ')
+        cmd = cmdSplit[1]
+        print(cmd)
+        if cmd == "End chat":
+            for user in chatRoom1:
+                chatRoom1.remove(user)
             print("Chat ended")
-        broadcast(msg)
+            break
+        for user in chatRoom1:
+            user.send(msg)
+def userChat2(c2):
+    while True:
+        msg = c2.recv(1024)
+        print(msg.decode())
+        cmdSplit = msg.decode().split(': ')
+        cmd = cmdSplit[1]
+        if cmd == "End chat":
+            for user in chatRoom2:
+                chatRoom2.remove(user)
+            print("Chat ended")
+            break
+        for user in chatRoom2:
+            user.send(msg)
+
 def threadTCP(c):
     #print(threads)
     while True:
@@ -62,19 +80,53 @@ def threadTCP(c):
                 toChat = threads[userIndex]
                 #print("clientA: " + str(c))
                 #print("clientB: " + str(toChat))
-                chatThreads.append(c)
-                chatThreads.append(toChat)
-                #print(chatThreads)
+                print(chatRoom1)
+                print(chatRoom2)
+                if chatRoom1:
+                    inSession = False
+                    for user in chatRoom1:
+                        if user == toChat:
+                            c.send((data.decode() + " is already in a session").encode())
+                            inSession = True
+                    if inSession == True:
+                        break
+                if chatRoom2:
+                    inSession = False
+                    for user in chatRoom2:
+                        if user == toChat:
+                            c.send((data.decode() + " is already in a session").encode())
+                            inSession = True
+                    if inSession == True:
+                        break
+                if not chatRoom1:
+                    print("Starting chatroom 1")
+                    chatRoom1.append(c)
+                    chatRoom1.append(toChat)
+                    print(chatRoom1)
+                    for user in chatRoom1:
+                        print(user)
+                        chatThread1 = threading.Thread(target=userChat1, args=(user, ))
+                        chatThread1.start()
+                
+                    c.send("Connected to user".encode())
+                    toChat.send("Connected to user".encode())
+                    print("Users connected")
+                    break
+                
+                if not chatRoom2:
+                    print("Starting chatroom 2")
+                    chatRoom2.append(c)
+                    chatRoom2.append(toChat)
+                    print(chatRoom2)
+                    for user in chatRoom2:
+                        print(user)
+                        chatThread2 = threading.Thread(target=userChat2, args=(user, ))
+                        chatThread2.start()
 
-                for user in chatThreads:
-                    chatThread = threading.Thread(target=userChat, args=(user, ))
-                    chatThread.start()
-
-                c.send("Connected to user".encode())
-                toChat.send("Connected to user".encode())
-                print("Users connected")
-        #broadcast(data)
-        #c.send(data)
+                    c.send("Connected to user".encode())
+                    toChat.send("Connected to user".encode())
+                    print("Users connected")
+                    break
 
 def tcpConn():
     while True:
