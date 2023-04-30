@@ -37,6 +37,7 @@ def userChatCol(chatThreads, c):
     return [row[c] for row in chatThreads]
 
 def userChat1(c1):
+    f = open("chatroom1.txt", "w")
     while True:
         msg = c1.recv(1024)
         print(msg.decode())
@@ -45,12 +46,23 @@ def userChat1(c1):
         print(cmd)
         if cmd == "End chat":
             for user in chatRoom1:
+                user.send("Ending session".encode())
                 chatRoom1.remove(user)
             print("Chat ended")
             break
-        for user in chatRoom1:
-            user.send(msg)
+        if cmd == "History":
+            f.close()
+            f = open("chatroom1.txt", "r")
+            c1.send(("CHAT HISTORY\n" + f.read()).encode())
+            f.close()
+            f = open("chatroom1.txt", "w")
+        else:
+            for user in chatRoom1:
+                f.write(msg.decode() + "\n")
+                user.send(msg)
+
 def userChat2(c2):
+    f = open("chatroom2.txt", "w")
     while True:
         msg = c2.recv(1024)
         print(msg.decode())
@@ -58,18 +70,28 @@ def userChat2(c2):
         cmd = cmdSplit[1]
         if cmd == "End chat":
             for user in chatRoom2:
+                user.send("Ending session".encode())
                 chatRoom2.remove(user)
             print("Chat ended")
             break
+        if cmd == "History":
+            f.close()
+            f = open("chatroom2.txt", "r")
+            c2.send(("CHAT HISTORY\n" + f.read()).encode())
+            f.close()
+            f = open("chatroom2.txt", "w")
         for user in chatRoom2:
+            f.write(msg.decode() + "\n")
             user.send(msg)
 
 def threadTCP(c):
     #print(threads)
     while True:
         data = c.recv(1024)
+
+        #Logging off
         if data.decode() == "Log off":
-            threads.remove(c)
+            threads.remove(c)               #Remove from thread array before closing connection
             c.close()
             print(f"{clientAddress} disconnected")
             break
@@ -80,8 +102,10 @@ def threadTCP(c):
                 toChat = threads[userIndex]
                 #print("clientA: " + str(c))
                 #print("clientB: " + str(toChat))
-                print(chatRoom1)
-                print(chatRoom2)
+                #print(chatRoom1)
+                #print(chatRoom2)
+
+                #Checking if the requested user is already in another session
                 if chatRoom1:
                     inSession = False
                     for user in chatRoom1:
@@ -98,18 +122,20 @@ def threadTCP(c):
                             inSession = True
                     if inSession == True:
                         break
+
+                #Will add to chat room if it is empty
                 if not chatRoom1:
                     print("Starting chatroom 1")
                     chatRoom1.append(c)
                     chatRoom1.append(toChat)
-                    print(chatRoom1)
+                    #print(chatRoom1)
                     for user in chatRoom1:
-                        print(user)
+                        #print(user)
                         chatThread1 = threading.Thread(target=userChat1, args=(user, ))
                         chatThread1.start()
                 
-                    c.send("Connected to user".encode())
-                    toChat.send("Connected to user".encode())
+                    c.send(f"Connected to {data.decode()}".encode())
+                    toChat.send(f"Connected to {clientAddress}".encode())
                     print("Users connected")
                     break
                 
@@ -117,33 +143,16 @@ def threadTCP(c):
                     print("Starting chatroom 2")
                     chatRoom2.append(c)
                     chatRoom2.append(toChat)
-                    print(chatRoom2)
+                    #print(chatRoom2)
                     for user in chatRoom2:
-                        print(user)
+                        #print(user)
                         chatThread2 = threading.Thread(target=userChat2, args=(user, ))
                         chatThread2.start()
 
-                    c.send("Connected to user".encode())
-                    toChat.send("Connected to user".encode())
+                    c.send(f"Connected to {data.decode()}".encode())
+                    toChat.send(f"Connected to {clientAddress}".encode())
                     print("Users connected")
                     break
-
-def tcpConn():
-    while True:
-        connect, clientAddress = serverTCP.accept()
-        print(f"Connected by {clientAddress}")
-        
-        connect.send(f"You are now connected to {tcpAddress}".encode())
-
-        thread = threading.Thread(target=threadTCP, args=(connect,))
-        thread.start()
-
-        #clientResponse = connect.recv(1024)
-
-        #if clientResponse.decode() == "Log off":
-        #    print(f"{clientAddress} disconnected")
-
-
         
 serverSocket = socket(AF_INET, SOCK_DGRAM)
 serverSocket.bind((udpAddress, udpPort))
@@ -156,15 +165,15 @@ print ("The server is ready to receive")
 while True:
     clientID, clientAddress = serverSocket.recvfrom(1024)
     checkID = clientID.decode()
-    print(checkID)
+    #print(checkID)
     index = 0
     idColumn = column(keyArr, 0)
     keyColumn = column(keyArr, 1)
     for i in idColumn:
-        print("Checking name: " + str(i))
+        #print("Checking name: " + str(i))
         if checkID == str(i):
-            print(index)
-            print(keyColumn[index])
+            #print(index)
+            #print(keyColumn[index])
             checkKey = keyColumn[index]
         index += 1
            #if checkID != j:
@@ -205,7 +214,7 @@ while True:
     authSuccess = str(randCookie) + ',' + str(tcpPort)
     #print(authSuccess)
     connUser.append(clientID.decode())
-    print(connUser)
+    #print(connUser)
 
     #encrypt and send auth message
     b = base64.urlsafe_b64encode(bytes(ck_a, 'utf-8'))
@@ -224,7 +233,6 @@ while True:
 
     thread = threading.Thread(target=threadTCP, args=(connect,))
     thread.start()
-    #tcpConn()     
 
 serverSocket.close()
  

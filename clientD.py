@@ -70,7 +70,7 @@ splitByComma = authDec.split(',')
 randCookie = splitByComma[0]
 serverTcp = splitByComma[1]
 #print(randCookie)
-print(serverTcp)
+#print(serverTcp)
 
 clientSocket.close()
 
@@ -81,24 +81,6 @@ clientSocket.send(randCookie.encode())
 connected = clientSocket.recv(1024)
 
 print(connected.decode())
-#while True:
-    #msg = clientSocket.recv(1024).decode()
-    #print(msg)
-
-    #chat = input('')
-    #beforeChat = '{}: {}'.format(clientID, chat)
-    #print(chat[:4])
-    #if chat == "Log off":
-    #    clientSocket.send(chat.encode())
-    #    print("Disconnecting")
-    #    clientSocket.close()
-    #    sys.exit()
-    #    break
-
-    #if chat[:4] == "Chat":
-    #    clientSocket.send(chat[-7:].encode())
-    #    print("Connecting to client")
-        #clientSocket.send(chat.encode())
 
 receive_thread = threading.Thread(target=receive)
 receive_thread.start()
