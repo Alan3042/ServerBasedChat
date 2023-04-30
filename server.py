@@ -144,11 +144,11 @@ while True:
     #print(xres)
 
     if res != xres: 
-        msgFail = "Client not found. Aborting"
+        msgFail = "Client not found. Aborting !!"
         serverSocket.sendto(msgFail.encode(), clientAddress)
         break
 
-    print("Client authenticated")
+    print("Client authenticated !!")
     randCookie = random.randint(1,10)
     authSuccess = str(randCookie) + ',' + str(tcpPort)
     #print(authSuccess)
@@ -159,7 +159,7 @@ while True:
     b = base64.urlsafe_b64encode(bytes(ck_a, 'utf-8'))
     #print(b)
     cipher_suite = Fernet(b)
-    print("Encrypting")
+    print("Encrypting now !!")
     authEnc = cipher_suite.encrypt(authSuccess.encode())
     serverSocket.sendto(authEnc, clientAddress)
 
