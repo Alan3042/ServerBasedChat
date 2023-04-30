@@ -31,14 +31,14 @@ def write():
         clientSocket.send(msgChat.encode())
         if chat == "Log off":
             clientSocket.send(chat.encode())
-            print("Disconnecting")
+            print("Disconnecting Now !!")
             clientSocket.close()
             sys.exit()
             break
 
         if chat[:4] == "Chat":
             clientSocket.send(chat[-7:].encode())
-            print("Connecting to client")
+            print("Please wait connecting to client !!")
 
 clientSocket.sendto(clientID.encode(), (serverIP, serverPort))
 
@@ -100,10 +100,8 @@ print(connected.decode())
     #    print("Connecting to client")
         #clientSocket.send(chat.encode())
 
-
 receive_thread = threading.Thread(target=receive)
 receive_thread.start()
 
 write_thread = threading.Thread(target=write)
 write_thread.start()
-
