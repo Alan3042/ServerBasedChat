@@ -37,7 +37,7 @@ def userChatCol(chatThreads, c):
     return [row[c] for row in chatThreads]
 
 def userChat1(c1):
-    f = open("chatroom1.txt", "w")
+    #f = open("chatroom1.txt", "w")
     while True:
         msg = c1.recv(1024)
         print(msg.decode())
@@ -51,18 +51,17 @@ def userChat1(c1):
             print("Chat ended")
             break
         if cmd == "History":
-            f.close()
             f = open("chatroom1.txt", "r")
             c1.send(("CHAT HISTORY\n" + f.read()).encode())
             f.close()
-            f = open("chatroom1.txt", "w")
         else:
             for user in chatRoom1:
+                f = open("chatroom1.txt", "a")
                 f.write(msg.decode() + "\n")
+                f.close()
                 user.send(msg)
 
 def userChat2(c2):
-    f = open("chatroom2.txt", "w")
     while True:
         msg = c2.recv(1024)
         print(msg.decode())
@@ -75,13 +74,13 @@ def userChat2(c2):
             print("Chat ended")
             break
         if cmd == "History":
-            f.close()
             f = open("chatroom2.txt", "r")
             c2.send(("CHAT HISTORY\n" + f.read()).encode())
             f.close()
-            f = open("chatroom2.txt", "w")
         for user in chatRoom2:
+            f = open("chatroom2.txt", "a")
             f.write(msg.decode() + "\n")
+            f.close()
             user.send(msg)
 
 def threadTCP(c):
