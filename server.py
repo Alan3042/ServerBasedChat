@@ -33,8 +33,6 @@ def column(arr, c):
     return [row[c] for row in arr]
 #for name in keyArr:
 #    print(name)
-def userChatCol(chatThreads, c):
-    return [row[c] for row in chatThreads]
 
 def userChat1(c1):
     #f = open("chatroom1.txt", "w")
@@ -55,11 +53,11 @@ def userChat1(c1):
             c1.send(("CHAT HISTORY\n" + f.read()).encode())
             f.close()
         else:
+            f = open("chatroom1.txt", "a")
+            f.write(msg.decode() + "\n")
+            f.close()
             for user in chatRoom1:
-                f = open("chatroom1.txt", "a")
-                f.write(msg.decode() + "\n")
-                f.close()
-                user.send(msg)
+               user.send(msg)
 
 def userChat2(c2):
     while True:
@@ -77,11 +75,12 @@ def userChat2(c2):
             f = open("chatroom2.txt", "r")
             c2.send(("CHAT HISTORY\n" + f.read()).encode())
             f.close()
-        for user in chatRoom2:
+        else:
             f = open("chatroom2.txt", "a")
             f.write(msg.decode() + "\n")
             f.close()
-            user.send(msg)
+            for user in chatRoom2:
+                user.send(msg)
 
 def threadTCP(c):
     #print(threads)
