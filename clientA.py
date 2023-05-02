@@ -27,8 +27,6 @@ def receive():
 def write():
     while True:
         chat = input('')
-        msgChat = '{}: {}'.format(clientID, chat)
-        clientSocket.send(msgChat.encode())
         if chat == "Log off":
             clientSocket.send(chat.encode())
             print("Disconnecting Now !!")
@@ -37,53 +35,59 @@ def write():
             break
 
         if chat[:4] == "Chat":
-            clientSocket.send(chat[-7:].encode())
+            clientSocket.send(chat.encode())
             print("Please wait connecting to client !!")
+        else:
+            msgChat = '{}: {}'.format(clientID, chat)
+            clientSocket.send(msgChat.encode())
 
-clientSocket.sendto(clientID.encode(), (serverIP, serverPort))
+start = input('')
 
-randrecv, serverAddress = clientSocket.recvfrom(2048)
-randcheck = randrecv.decode()
-#print(randcheck)
+if start == "Log on":
+    clientSocket.sendto(clientID.encode(), (serverIP, serverPort))
 
-hashSolve = str(randcheck)+key
-h = hashlib.new('sha256')
-h2 = hashlib.new('md5') #Needed for 32-byte key encryption
-hashFunc = hashSolve.encode()
-h.update(hashFunc)
-h2.update(hashFunc)
-ck_a = h2.hexdigest()
+    randrecv, serverAddress = clientSocket.recvfrom(2048)
+    randcheck = randrecv.decode()
+    #print(randcheck)
 
-clientSocket.sendto(h.hexdigest().encode(), serverAddress)
+    hashSolve = str(randcheck)+key
+    h = hashlib.new('sha256')
+    h2 = hashlib.new('md5') #Needed for 32-byte key encryption
+    hashFunc = hashSolve.encode()
+    h.update(hashFunc)
+    h2.update(hashFunc)
+    ck_a = h2.hexdigest()
 
-authMsg, serverAddress = clientSocket.recvfrom(1024)
-if authMsg.decode() == 'Client not found. Aborting':
-    print(authMsg.decode())
+    clientSocket.sendto(h.hexdigest().encode(), serverAddress)
+
+    authMsg, serverAddress = clientSocket.recvfrom(1024)
+    if authMsg.decode() == 'Client not found. Aborting':
+        print(authMsg.decode())
+        clientSocket.close()
+        sys.exit() 
+
+    cipher_suite = Fernet(base64.urlsafe_b64encode(bytes(ck_a, 'utf-8')))
+    authDec = cipher_suite.decrypt(authMsg).decode()
+    #print(authDec)
+
+    splitByComma = authDec.split(',')
+    randCookie = splitByComma[0]
+    serverTcp = splitByComma[1]
+    #print(randCookie)
+    #print(serverTcp)
+
     clientSocket.close()
-    sys.exit() 
 
-cipher_suite = Fernet(base64.urlsafe_b64encode(bytes(ck_a, 'utf-8')))
-authDec = cipher_suite.decrypt(authMsg).decode()
-#print(authDec)
+    #initiating tcp connection
+    clientSocket = socket(AF_INET, SOCK_STREAM)
+    clientSocket.connect((serverIP, int(serverTcp)))
+    clientSocket.send(randCookie.encode())
+    connected = clientSocket.recv(1024)
 
-splitByComma = authDec.split(',')
-randCookie = splitByComma[0]
-serverTcp = splitByComma[1]
-#print(randCookie)
-#print(serverTcp)
+    print(connected.decode())
 
-clientSocket.close()
+    receive_thread = threading.Thread(target=receive)
+    receive_thread.start()
 
-#initiating tcp connection
-clientSocket = socket(AF_INET, SOCK_STREAM)
-clientSocket.connect((serverIP, int(serverTcp)))
-clientSocket.send(randCookie.encode())
-connected = clientSocket.recv(1024)
-
-print(connected.decode())
-
-receive_thread = threading.Thread(target=receive)
-receive_thread.start()
-
-write_thread = threading.Thread(target=write)
-write_thread.start()
+    write_thread = threading.Thread(target=write)
+    write_thread.start()

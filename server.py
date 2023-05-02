@@ -53,7 +53,7 @@ def userChat1(c1):
             c1.send(("CHAT HISTORY\n" + f.read()).encode())
             f.close()
         else:
-            f = open("chatroom1.txt", "a")
+            f = open("chatroom1.txt", "a") #append to chat instead of overwriting
             f.write(msg.decode() + "\n")
             f.close()
             for user in chatRoom1:
@@ -76,7 +76,7 @@ def userChat2(c2):
             c2.send(("CHAT HISTORY\n" + f.read()).encode())
             f.close()
         else:
-            f = open("chatroom2.txt", "a")
+            f = open("chatroom2.txt", "a") #append to chat instead of overwriting
             f.write(msg.decode() + "\n")
             f.close()
             for user in chatRoom2:
@@ -86,17 +86,20 @@ def threadTCP(c):
     #print(threads)
     while True:
         data = c.recv(1024)
-
+        #print(data.decode()[:4])
+        print(data.decode()[-7:])
         #Logging off
         if data.decode() == "Log off":
             threads.remove(c)               #Remove from thread array before closing connection
             c.close()
             print(f"{clientAddress} disconnected")
             break
-        for name in connUser:
-            if name == data.decode():
-                userIndex = connUser.index(data.decode())
-                #print(userIndex)
+        if data.decode()[:4] == "Chat":
+            checkName = data.decode()[-7:]
+            nameFound = False
+            if checkName in connUser:
+                userIndex = connUser.index(checkName)
+                print(userIndex)
                 toChat = threads[userIndex]
                 #print("clientA: " + str(c))
                 #print("clientB: " + str(toChat))
@@ -151,7 +154,8 @@ def threadTCP(c):
                     toChat.send(f"Connected to {clientAddress}".encode())
                     print("Users connected")
                     break
-        
+            else:
+                c.send((checkName + " unreachable").encode())
 serverSocket = socket(AF_INET, SOCK_DGRAM)
 serverSocket.bind((udpAddress, udpPort))
 
@@ -209,19 +213,20 @@ while True:
 
     print("Client authenticated !!")
     randCookie = random.randint(1,10)
-    authSuccess = str(randCookie) + ',' + str(tcpPort)
+    authSuccess = str(randCookie) + ',' + str(tcpPort)      #auth success message
     #print(authSuccess)
     connUser.append(clientID.decode())
     #print(connUser)
 
     #encrypt and send auth message
-    b = base64.urlsafe_b64encode(bytes(ck_a, 'utf-8'))
+    b = base64.urlsafe_b64encode(bytes(ck_a, 'utf-8'))  #64-byte urlsafe 
     #print(b)
-    cipher_suite = Fernet(b)
+    cipher_suite = Fernet(b)                            #Fernet encryption
     print("Encrypting now !!")
     authEnc = cipher_suite.encrypt(authSuccess.encode())
     serverSocket.sendto(authEnc, clientAddress)
 
+    #Allow client to connect to server
     connect, clientAddress = serverTCP.accept()
     print(f"Connected by {clientAddress}")
 
