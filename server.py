@@ -82,6 +82,7 @@ def userChat1(c1):
             #del chatRoom1[:]
             #print("Chat ended")
             end_chat(chatRoom1User) #, chatRoom1
+            connUser.remove(c1)
             break
         if cmd == "History":
             f = open("chatroom1.txt", "r")
@@ -92,7 +93,8 @@ def userChat1(c1):
             f.write(msg.decode() + "\n")
             f.close()
             for user in chatRoom1User:
-                if user != c1:
+                #if user != c1:
+                if user in connUser and user != c1:
                     user.send(msg)
 
 def userChat2(c2):
@@ -108,6 +110,7 @@ def userChat2(c2):
             #del chatRoom2[:]
             #print("Chat ended")
             end_chat(chatRoom2User) #, chatRoom2
+            connUser.remove(c2)
             break
         if cmd == "History":
             f = open("chatroom2.txt", "r")
@@ -118,11 +121,11 @@ def userChat2(c2):
             f.write(msg.decode() + "\n")
             f.close()
             for user in chatRoom2User:
-                if user != c2:
+                #if user != c2:
+                if user in connUser and user != c2:
                     user.send(msg)
 
 def threadTCP(c, clientAddress):
-    global chat_session_active
     while True:
         data = c.recv(1024)
         decoded_data = data.decode().strip()
@@ -137,7 +140,6 @@ def threadTCP(c, clientAddress):
 
         # Chat
         elif decoded_data.startswith("Chat"):
-            chat_session_active = True
             checkName = decoded_data[5:]
             if checkName in connUser:
                 userIndex = connUser.index(checkName)
@@ -151,14 +153,16 @@ def threadTCP(c, clientAddress):
                         in_session = True
                         break
 
+
                 if not in_session:
                     # Will add to chat room if it is empty
-                    #c.send(f"Connecting to {checkName}...".encode())
-                    #toChat.send(f"Connected to {name}.".encode())
 
                     if not chatRoom1:
-
+                        
                         print("Starting chatroom 1")
+
+                        c.send(f"Connecting to {checkName}...".encode())
+                        toChat.send(f"Connected to {name}.".encode())
 
                         # Users in chat room
                         chatRoom1User.append(c)
@@ -171,8 +175,8 @@ def threadTCP(c, clientAddress):
                             # Thread array for chatroom
                             chatRoom1.append(chatThread1)
 
-                        #c.send(f"Connected to {checkName}".encode())
-                        #toChat.send(f"Connected to {clientAddress}".encode())
+                        c.send(f"Connected to {checkName}".encode())
+                        toChat.send(f"Connected to {clientAddress}".encode())
 
                         for chat_thread in chatRoom1:
                             chat_thread.join()
@@ -186,14 +190,17 @@ def threadTCP(c, clientAddress):
                         chatRoom2User.append(c)
                         chatRoom2User.append(toChat)
 
+                        c.send(f"Connecting to {checkName}...".encode())
+                        toChat.send(f"Connected to {name}.".encode())
+
                         for user in chatRoom2User:
                             chatThread2 = threading.Thread(target=userChat2, args=(user,))
                             chatThread2.start()
 
                             chatRoom2.append(chatThread2)
 
-                        #c.send(f"Connected to {checkName}".encode())
-                        #toChat.send(f"Connected to {clientAddress}".encode())
+                        c.send(f"Connected to {checkName}".encode())
+                        toChat.send(f"Connected to {clientAddress}".encode())
 
                         for chat_thread in chatRoom2:
                             chat_thread.join()
@@ -202,12 +209,7 @@ def threadTCP(c, clientAddress):
                         break
 
             else:
-                c.send(f"{checkName} unreachable".encode())       
-        elif decoded_data == "End chat":
-            chat_session_active = False
-            # Broadcast the "Ending session" message to both clients
-            for t in threads:
-                t.send("Ending session".encode())
+                c.send(f"{checkName} unreachable".encode())
 
 serverSocket = socket(AF_INET, SOCK_DGRAM)
 serverSocket.bind((udpAddress, udpPort))
