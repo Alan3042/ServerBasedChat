@@ -27,7 +27,9 @@ keyArr[3][1] = "d875acd920bfe21c"
 connUser = []
 threads = []
 chatRoom1 = []
+chatRoom1User = []
 chatRoom2 = []
+chatRoom2User = []
 
 def column(arr, c):
     return [row[c] for row in arr]
@@ -43,9 +45,12 @@ def userChat1(c1):
         cmd = cmdSplit[1]
         print(cmd)
         if cmd == "End chat":
-            for user in chatRoom1:
+            for user in chatRoom1User:
                 user.send("Ending session".encode())
-                chatRoom1.remove(user)
+            del chatRoom1User[1]
+            del chatRoom1User[0]
+            del chatRoom1[1]
+            del chatRoom1[0]
             print("Chat ended")
             break
         if cmd == "History":
@@ -56,7 +61,7 @@ def userChat1(c1):
             f = open("chatroom1.txt", "a") #append to chat instead of overwriting
             f.write(msg.decode() + "\n")
             f.close()
-            for user in chatRoom1:
+            for user in chatRoom1User:
                user.send(msg)
 
 def userChat2(c2):
@@ -66,9 +71,12 @@ def userChat2(c2):
         cmdSplit = msg.decode().split(': ')
         cmd = cmdSplit[1]
         if cmd == "End chat":
-            for user in chatRoom2:
+            for user in chatRoom2User:
                 user.send("Ending session".encode())
-                chatRoom2.remove(user)
+            del chatRoom2User[1]
+            del chatRoom2User[0]
+            del chatRoom2[1]
+            del chatRoom2[0]
             print("Chat ended")
             break
         if cmd == "History":
@@ -79,7 +87,7 @@ def userChat2(c2):
             f = open("chatroom2.txt", "a") #append to chat instead of overwriting
             f.write(msg.decode() + "\n")
             f.close()
-            for user in chatRoom2:
+            for user in chatRoom2User:
                 user.send(msg)
 
 def threadTCP(c):
@@ -107,17 +115,17 @@ def threadTCP(c):
                 #print(chatRoom2)
 
                 #Checking if the requested user is already in another session
-                if chatRoom1:
+                if chatRoom1User:
                     inSession = False
-                    for user in chatRoom1:
+                    for user in chatRoom1User:
                         if user == toChat:
                             c.send((data.decode() + " is already in a session").encode())
                             inSession = True
                     if inSession == True:
                         break
-                if chatRoom2:
+                if chatRoom2User:
                     inSession = False
-                    for user in chatRoom2:
+                    for user in chatRoom2User:
                         if user == toChat:
                             c.send((data.decode() + " is already in a session").encode())
                             inSession = True
@@ -127,31 +135,44 @@ def threadTCP(c):
                 #Will add to chat room if it is empty
                 if not chatRoom1:
                     print("Starting chatroom 1")
-                    chatRoom1.append(c)
-                    chatRoom1.append(toChat)
+
+                    #Users in chat room
+                    chatRoom1User.append(c)
+                    chatRoom1User.append(toChat)
                     #print(chatRoom1)
-                    for user in chatRoom1:
+                    for user in chatRoom1User:
                         #print(user)
                         chatThread1 = threading.Thread(target=userChat1, args=(user, ))
                         chatThread1.start()
-                
+
+                        #Thread array for chatroom
+                        chatRoom1.append(chatThread1)
+
                     c.send(f"Connected to {data.decode()}".encode())
                     toChat.send(f"Connected to {clientAddress}".encode())
+                    for c in chatRoom1:
+                        c.join()
+                
                     print("Users connected")
                     break
                 
                 if not chatRoom2:
                     print("Starting chatroom 2")
-                    chatRoom2.append(c)
-                    chatRoom2.append(toChat)
+                    chatRoom2User.append(c)
+                    chatRoom2User.append(toChat)
                     #print(chatRoom2)
-                    for user in chatRoom2:
+                    for user in chatRoom2User:
                         #print(user)
                         chatThread2 = threading.Thread(target=userChat2, args=(user, ))
                         chatThread2.start()
 
+                        chatRoom2.append(chatThread2)
+
                     c.send(f"Connected to {data.decode()}".encode())
                     toChat.send(f"Connected to {clientAddress}".encode())
+                    for c in chatRoom2:
+                        c.join()
+
                     print("Users connected")
                     break
             else:
