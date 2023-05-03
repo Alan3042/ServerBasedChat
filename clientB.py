@@ -20,6 +20,7 @@ def receive():
             msg = clientSocket.recv(1024).decode()
             print(msg)
         except:
+            print("Disconnected from server")
             clientSocket.close()
             sys.exit()
             break
@@ -35,7 +36,7 @@ def write():
             break
 
         if chat[:4] == "Chat":
-            clientSocket.send(chat[-7:].encode())
+            clientSocket.send(chat.encode())
             print("Please wait connecting to client !!")
         else:
             msgChat = '{}: {}'.format(clientID, chat)
