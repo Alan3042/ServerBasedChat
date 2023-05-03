@@ -15,18 +15,22 @@ key = 'd875acd920bfe21c'
 clientSocket = socket(AF_INET, SOCK_DGRAM)
 
 def receive(): 
+    global clientSocket
     while True:
         try:
             msg = clientSocket.recv(1024).decode()
             if msg == "SESSION_END":
                 print("Chat session ended.")
+                break
             print(msg)
         except:
-            clientSocket.close()
-            sys.exit()
+            print("Disconnected from server")
+            #clientSocket.close()
+            #sys.exit()
             break
 
 def write():
+    global clientSocket
     while True:
         chat = input('')
         msgChat = '{}: {}'.format(clientID, chat)
@@ -34,8 +38,8 @@ def write():
         if chat == "Log off":
             clientSocket.send(chat.encode())
             print("Disconnecting Now !!")
-            clientSocket.close()
-            sys.exit()
+            #clientSocket.close()
+            #sys.exit()
             break
 
         if chat[:4] == "Chat":
