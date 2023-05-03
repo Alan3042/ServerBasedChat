@@ -122,6 +122,7 @@ def userChat2(c2):
                     user.send(msg)
 
 def threadTCP(c, clientAddress):
+    global chat_session_active
     while True:
         data = c.recv(1024)
         decoded_data = data.decode().strip()
@@ -136,6 +137,7 @@ def threadTCP(c, clientAddress):
 
         # Chat
         elif decoded_data.startswith("Chat"):
+            chat_session_active = True
             checkName = decoded_data[5:]
             if checkName in connUser:
                 userIndex = connUser.index(checkName)
@@ -151,8 +153,8 @@ def threadTCP(c, clientAddress):
 
                 if not in_session:
                     # Will add to chat room if it is empty
-                    c.send(f"Connecting to {checkName}...".encode())
-                    toChat.send(f"Connected to {name}.".encode())
+                    #c.send(f"Connecting to {checkName}...".encode())
+                    #toChat.send(f"Connected to {name}.".encode())
 
                     if not chatRoom1:
 
@@ -200,7 +202,12 @@ def threadTCP(c, clientAddress):
                         break
 
             else:
-                c.send(f"{checkName} unreachable".encode())
+                c.send(f"{checkName} unreachable".encode())       
+        elif decoded_data == "End chat":
+            chat_session_active = False
+            # Broadcast the "Ending session" message to both clients
+            for t in threads:
+                t.send("Ending session".encode())
 
 serverSocket = socket(AF_INET, SOCK_DGRAM)
 serverSocket.bind((udpAddress, udpPort))

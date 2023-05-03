@@ -15,9 +15,9 @@ key = 'b0c2499ad74cf2a4'
 clientSocket = socket(AF_INET, SOCK_DGRAM)
 
 def receive(): 
-    global clientSocket, chat_session_active
-    while chat_session_active:
-    #while True:
+    global chat_session_active
+    #while chat_session_active:
+    while True:
         try:
             msg = clientSocket.recv(1024).decode()
             if msg == "Ending session": #SESSION_END
@@ -40,6 +40,8 @@ def write():
                 clientSocket.send(chat.encode())
                 chat_session_active = False
                 print("Ending chat session...")
+                receive_thread = threading.Thread(target=receive)
+                receive_thread.start()
             else:
                 msgChat = '{}: {}'.format(clientID, chat)
                 clientSocket.send(msgChat.encode())
@@ -53,6 +55,7 @@ def write():
         if chat[:4] == "Chat":
             clientSocket.send(chat.encode())
             print("Please wait connecting to client !!")
+            chat_session_active = True
         else:
             msgChat = '{}: {}'.format(clientID, chat)
             clientSocket.send(msgChat.encode())
