@@ -60,12 +60,12 @@ def udpServer():
         print(f"Sending message '{encryptedMessage.decode()}' to {clientAddress}")
         serverSocket.sendto(encryptedMessage, clientAddress)
 
-def end_chat(chat_room_users, chat_room):
+def end_chat(chat_room_users): #, chat_room
     for user in chat_room_users:
         user.send("Ending session".encode())
-        user.close()
-    del chat_room_users[:]
-    del chat_room[:]
+    #del chat_room_users[:]
+    #del chat_room[:]
+    chat_room_users.clear()
     print("Chat ended")
 
 def userChat1(c1):
@@ -81,7 +81,7 @@ def userChat1(c1):
             #del chatRoom1User[:]
             #del chatRoom1[:]
             #print("Chat ended")
-            end_chat(chatRoom1User, chatRoom1)
+            end_chat(chatRoom1User) #, chatRoom1
             break
         if cmd == "History":
             f = open("chatroom1.txt", "r")
@@ -107,7 +107,7 @@ def userChat2(c2):
             #del chatRoom2User[:]
             #del chatRoom2[:]
             #print("Chat ended")
-            end_chat(chatRoom2User, chatRoom2)
+            end_chat(chatRoom2User) #, chatRoom2
             break
         if cmd == "History":
             f = open("chatroom2.txt", "r")

@@ -18,6 +18,8 @@ def receive():
     while True:
         try:
             msg = clientSocket.recv(1024).decode()
+            if msg == "SESSION_END":
+                print("Chat session ended.")
             print(msg)
         except:
             print("Disconnected from server")
