@@ -63,6 +63,7 @@ def udpServer():
 def end_chat(chat_room_users, chat_room):
     for user in chat_room_users:
         user.send("Ending session".encode())
+        user.close()
     del chat_room_users[:]
     del chat_room[:]
     print("Chat ended")
