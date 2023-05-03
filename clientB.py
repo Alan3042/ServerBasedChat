@@ -19,7 +19,7 @@ def receive():
     while True:
         try:
             msg = clientSocket.recv(1024).decode()
-            if msg == "SESSION_END":
+            if msg == "Ending session": #SESSION_END
                 print("Chat session ended.")
                 break
             print(msg)
