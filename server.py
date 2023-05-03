@@ -60,6 +60,13 @@ def udpServer():
         print(f"Sending message '{encryptedMessage.decode()}' to {clientAddress}")
         serverSocket.sendto(encryptedMessage, clientAddress)
 
+def end_chat(chat_room_users, chat_room):
+    for user in chat_room_users:
+        user.send("Ending session".encode())
+    del chat_room_users[:]
+    del chat_room[:]
+    print("Chat ended")
+
 def userChat1(c1):
     while True:
         msg = c1.recv(1024)
@@ -68,11 +75,12 @@ def userChat1(c1):
         cmd = cmdSplit[1]
         print(cmd)
         if cmd == "End chat":
-            for user in chatRoom1User:
-                user.send("Ending session".encode())
-            del chatRoom1User[:]
-            del chatRoom1[:]
-            print("Chat ended")
+            #for user in chatRoom1User:
+            #    user.send("Ending session".encode())
+            #del chatRoom1User[:]
+            #del chatRoom1[:]
+            #print("Chat ended")
+            end_chat(chatRoom1User, chatRoom1)
             break
         if cmd == "History":
             f = open("chatroom1.txt", "r")
@@ -93,11 +101,12 @@ def userChat2(c2):
         cmdSplit = msg.decode().split(': ')
         cmd = cmdSplit[1]
         if cmd == "End chat":
-            for user in chatRoom2User:
-                user.send("Ending session".encode())
-            del chatRoom2User[:]
-            del chatRoom2[:]
-            print("Chat ended")
+            #for user in chatRoom1User:
+            #    user.send("Ending session".encode())
+            #del chatRoom2User[:]
+            #del chatRoom2[:]
+            #print("Chat ended")
+            end_chat(chatRoom2User, chatRoom2)
             break
         if cmd == "History":
             f = open("chatroom2.txt", "r")
