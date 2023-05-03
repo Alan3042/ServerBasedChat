@@ -122,6 +122,7 @@ def userChat2(c2):
                     user.send(msg)
 
 def threadTCP(c, clientAddress):
+    global chat_session_active
     while True:
         data = c.recv(1024)
         decoded_data = data.decode().strip()
@@ -136,6 +137,7 @@ def threadTCP(c, clientAddress):
 
         # Chat
         elif decoded_data.startswith("Chat"):
+            chat_session_active = True
             checkName = decoded_data[5:]
             if checkName in connUser:
                 userIndex = connUser.index(checkName)

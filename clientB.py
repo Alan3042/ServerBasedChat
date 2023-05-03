@@ -15,12 +15,14 @@ key = 'b0c2499ad74cf2a4'
 clientSocket = socket(AF_INET, SOCK_DGRAM)
 
 def receive(): 
-    global clientSocket
-    while True:
+    global clientSocket, chat_session_active
+    while chat_session_active:
+    #while True:
         try:
             msg = clientSocket.recv(1024).decode()
             if msg == "Ending session": #SESSION_END
                 print("Chat session ended.")
+                chat_session_active = False
                 break
             print(msg)
         except:
@@ -30,14 +32,22 @@ def receive():
             break
 
 def write():
-    global clientSocket
+    global chat_session_active
     while True:
         chat = input('')
-        if chat == "Log off":
+        if chat_session_active:
+            if chat == "End chat":
+                clientSocket.send(chat.encode())
+                chat_session_active = False
+                print("Ending chat session...")
+            else:
+                msgChat = '{}: {}'.format(clientID, chat)
+                clientSocket.send(msgChat.encode())
+        elif chat == "Log off":
             clientSocket.send(chat.encode())
             print("Disconnecting Now !!")
-            #clientSocket.close()
-            #sys.exit()
+            clientSocket.close()
+            sys.exit()
             break
 
         if chat[:4] == "Chat":
