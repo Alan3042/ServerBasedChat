@@ -149,14 +149,16 @@ def threadTCP(c, clientAddress):
                         in_session = True
                         break
 
+
                 if not in_session:
                     # Will add to chat room if it is empty
-                    c.send(f"Connecting to {checkName}...".encode())
-                    toChat.send(f"Connected to {name}.".encode())
 
                     if not chatRoom1:
-
+                        
                         print("Starting chatroom 1")
+
+                        c.send(f"Connecting to {checkName}...".encode())
+                        toChat.send(f"Connected to {name}.".encode())
 
                         # Users in chat room
                         chatRoom1User.append(c)
@@ -183,6 +185,9 @@ def threadTCP(c, clientAddress):
 
                         chatRoom2User.append(c)
                         chatRoom2User.append(toChat)
+
+                        c.send(f"Connecting to {checkName}...".encode())
+                        toChat.send(f"Connected to {name}.".encode())
 
                         for user in chatRoom2User:
                             chatThread2 = threading.Thread(target=userChat2, args=(user,))
