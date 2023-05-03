@@ -20,6 +20,7 @@ def receive():
             msg = clientSocket.recv(1024).decode()
             print(msg)
         except:
+            print("Disconnected from server")
             clientSocket.close()
             sys.exit()
             break
