@@ -171,8 +171,8 @@ def threadTCP(c, clientAddress):
                             # Thread array for chatroom
                             chatRoom1.append(chatThread1)
 
-                        c.send(f"Connected to {checkName}".encode())
-                        toChat.send(f"Connected to {clientAddress}".encode())
+                        #c.send(f"Connected to {checkName}".encode())
+                        #toChat.send(f"Connected to {clientAddress}".encode())
 
                         for chat_thread in chatRoom1:
                             chat_thread.join()
@@ -192,8 +192,8 @@ def threadTCP(c, clientAddress):
 
                             chatRoom2.append(chatThread2)
 
-                        c.send(f"Connected to {checkName}".encode())
-                        toChat.send(f"Connected to {clientAddress}".encode())
+                        #c.send(f"Connected to {checkName}".encode())
+                        #toChat.send(f"Connected to {clientAddress}".encode())
 
                         for chat_thread in chatRoom2:
                             chat_thread.join()
