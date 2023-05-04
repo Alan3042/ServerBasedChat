@@ -73,29 +73,34 @@ def userChat1(c1):
         msg = c1.recv(1024)
         print(msg.decode())
         cmdSplit = msg.decode().split(': ')
-        cmd = cmdSplit[1]
-        print(cmd)
-        if cmd == "End chat":
-            #for user in chatRoom1User:
-            #    user.send("Ending session".encode())
-            #del chatRoom1User[:]
-            #del chatRoom1[:]
-            #print("Chat ended")
-            end_chat(chatRoom1User) #, chatRoom1
-            connUser.remove(c1)
-            break
-        if cmd == "History":
-            f = open("chatroom1.txt", "r")
-            c1.send(("CHAT HISTORY\n" + f.read()).encode())
-            f.close()
+        if len(cmdSplit) >= 2:
+            cmd = cmdSplit[1]
+            print(cmd)
+            if cmd == "End chat":
+                #for user in chatRoom1User:
+                #    user.send("Ending session".encode())
+                #del chatRoom1User[:]
+                #del chatRoom1[:]
+                #print("Chat ended")
+                end_chat(chatRoom1User) #, chatRoom1
+                connUser.remove(c1)
+                break
+            elif cmd == "History":
+                f = open("chatroom1.txt", "r")
+                c1.send(("CHAT HISTORY\n" + f.read()).encode())
+                f.close()
+                pass
+            else:
+                f = open("chatroom1.txt", "a") #append to chat instead of overwriting
+                f.write(msg.decode() + "\n")
+                f.close()
+                for user in chatRoom1User:
+                    #if user != c1:
+                    if user in connUser and user != c1:
+                        user.send(msg)
+                pass
         else:
-            f = open("chatroom1.txt", "a") #append to chat instead of overwriting
-            f.write(msg.decode() + "\n")
-            f.close()
-            for user in chatRoom1User:
-                #if user != c1:
-                if user in connUser and user != c1:
-                    user.send(msg)
+            print("Invalid message format:", msg.decode())
 
 def userChat2(c2):
     while True:
