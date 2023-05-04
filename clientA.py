@@ -28,11 +28,13 @@ def receive():
             print(msg)
         except:
             print("Disconnected from server")
+            chat_session_active = False
             #clientSocket.close()
             #sys.exit()
             break
 
 def write():
+    global chat_session_active
     chat_session_active = False  # initialize chat_session_active variable
     while True:
         chat = input('')

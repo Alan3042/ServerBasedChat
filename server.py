@@ -132,7 +132,13 @@ def userChat2(c2):
 
 def threadTCP(c, clientAddress):
     while True:
-        data = c.recv(1024)
+        try:
+            data = c.recv(1024)
+        except:
+            print(f"{clientAddress} disconnected")
+            c.close()
+            threads.remove(c)
+            break
         decoded_data = data.decode().strip()
         print('Waiting for a connection...')
 
