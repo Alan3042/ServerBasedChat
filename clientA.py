@@ -1,4 +1,4 @@
-#! /usr/bin/env python3.8
+#! /usr/bin/env python3
 import socket
 from socket import *
 import hashlib
@@ -13,42 +13,20 @@ serverPort = 12000
 clientID = 'clientA'
 key = 'a3c52bc7fd3a125e'
 clientSocket = socket(AF_INET, SOCK_DGRAM)
-chat_session_active = False
 
 def receive(): 
-    global chat_session_active
-    #while chat_session_active:
     while True:
         try:
             msg = clientSocket.recv(1024).decode()
-            if msg == "Ending session": #SESSION_END
-                print("Chat session ended.")
-                chat_session_active = False
-                break
             print(msg)
         except:
-            print("Disconnected from server")
-            chat_session_active = False
-            #clientSocket.close()
-            #sys.exit()
+            clientSocket.close()
+            sys.exit()
             break
-
 def write():
-    global chat_session_active
-    chat_session_active = False  # initialize chat_session_active variable
     while True:
         chat = input('')
-        if chat_session_active:
-            if chat == "End chat":
-                clientSocket.send(chat.encode())
-                chat_session_active = False
-                print("Ending chat session...")
-                receive_thread = threading.Thread(target=receive)
-                receive_thread.start()
-            else:
-                msgChat = '{}: {}'.format(clientID, chat)
-                clientSocket.send(msgChat.encode())
-        elif chat == "Log off":
+        if chat == "Log off":
             clientSocket.send(chat.encode())
             print("Disconnecting Now !!")
             clientSocket.close()
@@ -58,7 +36,10 @@ def write():
         if chat[:4] == "Chat":
             clientSocket.send(chat.encode())
             print("Please wait connecting to client !!")
-            chat_session_active = True
+        if chat == "End chat":
+            clientSocket.send(chat.encode())
+        if chat[:7] == "History":
+            clientSocket.send(chat.encode())
         else:
             msgChat = '{}: {}'.format(clientID, chat)
             clientSocket.send(msgChat.encode())

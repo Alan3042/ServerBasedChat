@@ -1,4 +1,4 @@
-#! /usr/bin/env python3.8
+#! /usr/bin/env python3
 
 import socket
 from socket import *
@@ -7,6 +7,8 @@ import random
 import base64
 from cryptography.fernet import Fernet
 import threading
+from threading import Event
+import sys
 
 udpAddress = "127.0.0.1"
 tcpAddress = "127.0.0.1"
@@ -33,195 +35,199 @@ chatRoom2User = []
 
 def column(arr, c):
     return [row[c] for row in arr]
-	#for name in keyArr:
-	#print(name)
+#for name in keyArr:
+#    print(name)
+def findName(sock):
+    sockIndex = threads.index(sock)
+    print(connUser[sockIndex])
+    return connUser[sockIndex]
 
-def udpServer():
-    global keyArr
-    serverPort = udpPort
-    serverSocket = socket(AF_INET, SOCK_DGRAM)
-    serverSocket.bind((udpAddress, int(serverPort)))
-    print("The server is ready to receive")
 
-    while True:
-        rand = random.randint(0, 100)
-        message, clientAddress = serverSocket.recvfrom(1024)
-        print(f"Received message '{message.decode()}' from {clientAddress}")
-        clientID, msg = message.decode().split(":")
-        keyIndex = [i for i, row in enumerate(keyArr) if row[0] == clientID][0]
-        secretKey = keyArr[keyIndex][1].encode()
-        h = hashlib.sha256(secretKey)
-        key = h.digest()
-        f = Fernet(base64.urlsafe_b64encode(key))
-        decryptedMessage = f.decrypt(msg.encode()).decode()
-        print(f"Decrypted message '{decryptedMessage}'")
-        modifiedMessage = decryptedMessage.upper()
-        encryptedMessage = f.encrypt(modifiedMessage.encode())
-        print(f"Sending message '{encryptedMessage.decode()}' to {clientAddress}")
-        serverSocket.sendto(encryptedMessage, clientAddress)
-
-def end_chat(chat_room_users): #, chat_room
-    for user in chat_room_users:
-        user.send("Ending session".encode())
-    #del chat_room_users[:]
-    #del chat_room[:]
-    chat_room_users.clear()
-    print("Chat ended")
-
-def userChat1(c1):
-    while True:
+def userChat1(name, req, sID, c1):
+    #f = open("chatroom1.txt", "w")
+     while True:
         msg = c1.recv(1024)
         print(msg.decode())
-        cmdSplit = msg.decode().split(': ')
-        if len(cmdSplit) >= 2:
-            cmd = cmdSplit[1]
-            print(cmd)
-            if cmd == "End chat":
-                #for user in chatRoom1User:
-                #    user.send("Ending session".encode())
-                #del chatRoom1User[:]
-                #del chatRoom1[:]
-                #print("Chat ended")
-                end_chat(chatRoom1User) #, chatRoom1
-                connUser.remove(c1)
-                break
-            elif cmd == "History":
-                f = open("chatroom1.txt", "r")
-                c1.send(("CHAT HISTORY\n" + f.read()).encode())
-                f.close()
-                pass
-            else:
-                f = open("chatroom1.txt", "a") #append to chat instead of overwriting
-                f.write(msg.decode() + "\n")
-                f.close()
-                for user in chatRoom1User:
-                    #if user != c1:
-                    if user in connUser and user != c1:
-                        user.send(msg)
-                pass
+        #cmdSplit = msg.decode().split(': ')
+        #cmd = cmdSplit[1]
+        #print(cmd)
+        if msg.decode() == "Log off":
+            threads.remove(c1)               #Remove from thread array before closing connection
+            c1.close()
+            print(f"{clientAddress} disconnected")
+            break
+        elif msg.decode() == "End chat":
+            for user in chatRoom1User:
+                user.send("Ending session".encode())
+            #del chatRoom1User[1]
+            userIndex = chatRoom1User.index(c1)
+            del chatRoom1User[userIndex]
+            #del chatRoom1[1]
+            del chatRoom1[userIndex]
+            #print(threads)
+            #print(chatRoom1User)
+            print("Chat ended")
+            break
+        elif msg.decode() == "History":
+            sender = findName(c1)
+            f = open(name + "-" + req + ".txt", "r")
+            c1.send(("CHAT HISTORY\n" + f.read()).encode())
+            f.close()
         else:
-            print("Invalid message format:", msg.decode())
+            sender = findName(c1)
+            f = open(name + "-" + req + ".txt", "a") #append to chat instead of overwriting
+            f.write("session-" + str(sID) + " from " + msg.decode() + "\n")
+            f.close()
+            for user in chatRoom1User:
+                if user != c1:
+                    user.send(msg)
 
-def userChat2(c2):
-    while True:
+def userChat2(name, req, sID, c2):
+    #f = open("chatroom1.txt", "w")
+     while True:
         msg = c2.recv(1024)
         print(msg.decode())
-        cmdSplit = msg.decode().split(': ')
-        cmd = cmdSplit[1]
-        if cmd == "End chat":
-            #for user in chatRoom1User:
-            #    user.send("Ending session".encode())
-            #del chatRoom2User[:]
-            #del chatRoom2[:]
-            #print("Chat ended")
-            end_chat(chatRoom2User) #, chatRoom2
-            connUser.remove(c2)
+       # cmdSplit = msg.decode().split(': ')
+       # cmd = cmdSplit[1]
+       # print(cmd)
+        if msg.decode() == "Log off":
+            threads.remove(c1)               #Remove from thread array before closing connection
+            c1.close()
+            print(f"{clientAddress} disconnected")
             break
-        if cmd == "History":
-            f = open("chatroom2.txt", "r")
+        elif msg.decode() == "End chat":
+            for user in chatRoom2User:
+                user.send("Ending session".encode())
+            #del chatRoom2User[1]
+            del chatRoom2User[0]
+            #del chatRoom2[1]
+            del chatRoom2[0]
+            #print(chatRoom1User)
+            print("Chat ended")
+            break
+        elif msg.decode() == "History":
+            sender = findName(c2)
+            f = open(name + "-" + req + ".txt", "r")
             c2.send(("CHAT HISTORY\n" + f.read()).encode())
             f.close()
         else:
-            f = open("chatroom2.txt", "a") #append to chat instead of overwriting
-            f.write(msg.decode() + "\n")
+            sender = findName(c2)
+            f = open(name + "-" + req + ".txt", "a") #append to chat instead of overwriting
+            f.write("session-" + str(sID) + " from " + msg.decode() + "\n")
             f.close()
             for user in chatRoom2User:
-                #if user != c2:
-                if user in connUser and user != c2:
+                if user != c2:
                     user.send(msg)
 
-def threadTCP(c, clientAddress):
+        
+def threadTCP(c):
+    #print(threads)
+    #print(threads[0])
+    sessionID = 0
     while True:
-        try:
-            data = c.recv(1024)
-        except:
-            print(f"{clientAddress} disconnected")
-            c.close()
-            threads.remove(c)
-            break
-        decoded_data = data.decode().strip()
-        print('Waiting for a connection...')
+        #print(str(c))
+        data = c.recv(1024)
+        print(data.decode())
+        #print(data.decode()[:4])
+        #print(data.decode()[-7:])
+        #Logging off
+        if data.decode() == "Log off":
+            sockIndex = threads.index(c)
+            threads.remove(c)               #Remove from thread array before closing connection
+            del connUser[sockIndex]
 
-        # Logging off
-        if decoded_data == "Log off":
-            threads.remove(c)  # Remove from thread array before closing connection
+            #print(threads)
             c.close()
             print(f"{clientAddress} disconnected")
             break
-
-        # Chat
-        elif decoded_data.startswith("Chat"):
-            checkName = decoded_data[5:]
+        elif data.decode()[:7] == "History":
+            name = data.decode()[-7:]
+            sender = findName(c)
+            f = open(name + "-" + sender + ".txt", "r")
+            c.send(("CHAT HISTORY\n" + f.read()).encode())
+            f.close()
+        elif data.decode()[:4] == "Chat":
+            print(connUser)
+            checkName = data.decode()[-7:]
             if checkName in connUser:
                 userIndex = connUser.index(checkName)
+                print(userIndex)
                 toChat = threads[userIndex]
-                in_session = False
+                #print("clientA: " + str(c))
+                #print("clientB: " + str(toChat))
+                #print(chatRoom1)
+                #print(chatRoom2)
 
-                # Checking if the requested user is already in another session
-                for user_list in [chatRoom1User, chatRoom2User]:
-                    if toChat in user_list:
-                        c.send(f"{checkName} is already in a session".encode())
-                        in_session = True
-                        break
+                #Checking if the requested user is already in another session
+                if chatRoom1User:
+                    inSession = False
+                    for user in chatRoom1User:
+                        if user == toChat:
+                            c.send((data.decode()[-7:] + " is already in a session").encode())
+                            inSession = True
+                    #if inSession == True:
+                        #break
+                elif chatRoom2User:
+                    inSession = False
+                    for user in chatRoom2User:
+                        if user == toChat:
+                            c.send((data.decode()[-7:] + " is already in a session").encode())
+                            inSession = True
+                    #if inSession == True:
+                        #break
 
+                #Will add to chat room if it is empty
+                elif not chatRoom1:
+                    print("Starting chatroom 1")
+                    sessionID += 1
 
-                if not in_session:
-                    # Will add to chat room if it is empty
+                    #Users in chat room
+                    chatRoom1User.append(c)
+                    chatRoom1User.append(toChat)
+                    requester = findName(c)
+                    print(data.decode()[-7:])
+                    username = data.decode()[-7:]
+                    f = (username + "-" + requester + ".txt", "x")
+                    #print(chatRoom1)
+                    for user in chatRoom1User:
+                        #print(user)
+                        chatThread1 = threading.Thread(target=userChat1, args=(data.decode(), requester, sessionID,  user, ))
+                        chatThread1.start()
 
-                    if not chatRoom1:
-                        
-                        print("Starting chatroom 1")
+                        #Thread array for chatroom
+                        chatRoom1.append(chatThread1)
 
-                        c.send(f"Connecting to {checkName}...".encode())
-                        toChat.send(f"Connected to {name}.".encode())
+                    c.send(f"Connected to {data.decode()[-7:]}".encode())
+                    toChat.send(f"Connected to {clientAddress}".encode())
+                    #for c in chatRoom1:
+                    chatThread1.join()
+                
+                    #print("Users connected")
+                    #break
+                
+                elif not chatRoom2:
+                    print("Starting chatroom 2")
+                    chatRoom2User.append(c)
+                    chatRoom2User.append(toChat)
+                    requester = findName(c)
+                    f = (data.decode()[-7:] + "-" + requester + ".txt", "x")
+                    #print(chatRoom2)
+                    for user in chatRoom2User:
+                        #print(user)
+                        chatThread2 = threading.Thread(target=userChat2, args=(data.decode(), requester, sessionID, user, ))
+                        chatThread2.start()
 
-                        # Users in chat room
-                        chatRoom1User.append(c)
-                        chatRoom1User.append(toChat)
+                        chatRoom2.append(chatThread2)
 
-                        for user in chatRoom1User:
-                            chatThread1 = threading.Thread(target=userChat1, args=(user,))
-                            chatThread1.start()
+                    c.send(f"Connected to {data.decode()}".encode())
+                    toChat.send(f"Connected to {clientAddress}".encode())
+                    #for c in chatRoom2:
+                    chatThread2.join()
 
-                            # Thread array for chatroom
-                            chatRoom1.append(chatThread1)
-
-                        c.send(f"Connected to {checkName}".encode())
-                        toChat.send(f"Connected to {clientAddress}".encode())
-
-                        for chat_thread in chatRoom1:
-                            chat_thread.join()
-
-                        print("Users connected")
-                        break
-
-                    elif not chatRoom2:
-                        print("Starting chatroom 2")
-
-                        chatRoom2User.append(c)
-                        chatRoom2User.append(toChat)
-
-                        c.send(f"Connecting to {checkName}...".encode())
-                        toChat.send(f"Connected to {name}.".encode())
-
-                        for user in chatRoom2User:
-                            chatThread2 = threading.Thread(target=userChat2, args=(user,))
-                            chatThread2.start()
-
-                            chatRoom2.append(chatThread2)
-
-                        c.send(f"Connected to {checkName}".encode())
-                        toChat.send(f"Connected to {clientAddress}".encode())
-
-                        for chat_thread in chatRoom2:
-                            chat_thread.join()
-
-                        print("Users connected")
-                        break
-
+                    #print("Users connected")
+                    #break
             else:
-                c.send(f"{checkName} unreachable".encode())
-
+                c.send((checkName + " unreachable").encode())
 serverSocket = socket(AF_INET, SOCK_DGRAM)
 serverSocket.bind((udpAddress, udpPort))
 
@@ -293,14 +299,14 @@ while True:
     serverSocket.sendto(authEnc, clientAddress)
 
     #Allow client to connect to server
-    c, clientAddress = serverTCP.accept()
+    connect, clientAddress = serverTCP.accept()
     print(f"Connected by {clientAddress}")
 
-    c.send(f"You are now connected to {tcpAddress}".encode())
+    connect.send(f"You are now connected to {tcpAddress}".encode())
 
-    threads.append(c)
+    threads.append(connect)
 
-    thread = threading.Thread(target=threadTCP, args=(c, clientAddress))
+    thread = threading.Thread(target=threadTCP, args=(connect,))
     thread.start()
 
 serverSocket.close()

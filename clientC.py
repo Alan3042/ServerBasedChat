@@ -1,4 +1,4 @@
-#! /usr/bin/env python3.8
+#! /usr/bin/env python3
 import socket
 from socket import *
 import hashlib
@@ -15,37 +15,33 @@ key = 'c341ad84cbf67fea'
 clientSocket = socket(AF_INET, SOCK_DGRAM)
 
 def receive(): 
-    global clientSocket
     while True:
         try:
             msg = clientSocket.recv(1024).decode()
-            if msg == "SESSION_END":
-                print("Chat session ended.")
-                break
             print(msg)
         except:
-            print("Disconnected from server")
-            #clientSocket.close()
-            #sys.exit()
+            clientSocket.close()
+            sys.exit()
             break
 
 def write():
-    global clientSocket
     while True:
         chat = input('')
-        msgChat = '{}: {}'.format(clientID, chat)
-        clientSocket.send(msgChat.encode())
         if chat == "Log off":
             clientSocket.send(chat.encode())
             print("Disconnecting Now !!")
-            #clientSocket.close()
-            #sys.exit()
+            clientSocket.close()
+            sys.exit()
             break
 
         if chat[:4] == "Chat":
             clientSocket.send(chat.encode())
             print("Please wait connecting to client !!")
-
+        if chat[:7] == "History":
+                    clientSocket.send(chat.encode())
+        else:
+            msgChat = '{}: {}'.format(clientID, chat)
+            clientSocket.send(msgChat.encode())
 start = input('')
 
 if start == "Log on":
