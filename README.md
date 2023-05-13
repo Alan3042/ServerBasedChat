@@ -15,10 +15,3 @@ While in a chat, each user can view their current chat history by typing History
 To end a chat session, type end chat and you will be disconnected from the user and free to connect with other users
 
 To disconnect from the server, type Log off
-
-ServerBasedChat is a chat application built using Python that allows users to connect and communicate in real-time over the internet.
-
-This application uses a client-server architecture, where the client is the browser-based Python chat interface, and the server is a Python server that handles the real-time communication between clients.
-
-The project is open-source and available on GitHub at https://github.com/Alan3042/ServerBasedChat. Feel free to download and use the project code as a reference or contribute to the development of the application by submitting a pull request.
-
